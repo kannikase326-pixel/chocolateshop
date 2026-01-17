@@ -97,7 +97,7 @@ export default function Home() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 30 }}>🍫</span>
               <h1 style={{ margin: 0, fontSize: 46, letterSpacing: -0.6 }}>
-                Chocolate Shop
+               ร้าน Chocolate Shop
               </h1>
             </div>
             <p style={{ margin: '6px 0 0', opacity: 0.9 }}>

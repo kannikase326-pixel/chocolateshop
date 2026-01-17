@@ -198,7 +198,7 @@ export default function AdminPage() {
               </h1>
             </div>
             <p style={{ margin: '6px 0 0', opacity: 0.9 }}>
-              เพิ่ม / ลบ / แก้ไข สินค้า (แบบตาราง)
+              เพิ่ม / ลบ / แก้ไข สินค้า 
             </p>
           </div>
 
@@ -215,7 +215,7 @@ export default function AdminPage() {
               boxShadow: '0 10px 18px rgba(0,0,0,0.18)',
             }}
           >
-            ← กลับหน้าเว็บ
+            ← กลับหน้าร้าน
           </a>
         </div>
       </div>
