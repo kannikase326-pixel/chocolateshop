@@ -26,11 +26,10 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([])
   const [q, setQ] = useState('')
   const [cat, setCat] = useState('all')
-
-  // ✅ responsive แบบง่าย: เช็คความกว้างหน้าจอ
   const [isNarrow, setIsNarrow] = useState(false)
+
   useEffect(() => {
-    const onResize = () => setIsNarrow(window.innerWidth <= 900)
+    const onResize = () => setIsNarrow(window.innerWidth <= 1050) // ✅ กันทับกันจอแคบ
     onResize()
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
@@ -107,6 +106,7 @@ export default function Home() {
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 16,
+            flexWrap: 'wrap',
           }}
         >
           <div>
@@ -149,35 +149,21 @@ export default function Home() {
             padding: 14,
             boxShadow: '0 10px 24px rgba(0,0,0,0.06)',
             border: '1px solid rgba(0,0,0,0.05)',
-            display: 'grid',
-            gap: 12,
             position: 'relative',
             zIndex: 50,
-            overflow: 'visible',
           }}
         >
-          <div
-            style={{
-              display: 'grid',
-              gap: 10,
-              alignItems: 'center',
-
-              // ✅ จุดแก้สำคัญ: ทำคอลัมน์ไม่ให้บีบจนทับกัน
-              gridTemplateColumns: isNarrow
-                ? '1fr'
-                : 'minmax(220px, 340px) minmax(180px, 260px) auto auto',
-
-            }}
-          >
-            {/* SEARCH */}
-            <div style={{ position: 'relative', zIndex: 55 }}>
+          {/* ✅ NEW LAYOUT: แยกเป็น 2 แถว กันทับกัน 100% */}
+          <div style={{ display: 'grid', gap: 12 }}>
+            {/* ROW 1: SEARCH (ให้ยาวสุด) */}
+            <div style={{ position: 'relative' }}>
               <span
                 style={{
                   position: 'absolute',
                   left: 12,
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  opacity: 0.5,
+                  opacity: 0.55,
                 }}
               >
                 🔎
@@ -186,76 +172,71 @@ export default function Home() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="ค้นหา: ชื่อ / คำอธิบาย / หมวด / ราคา..."
-                style={{ ...inputStyle, paddingLeft: 36, height: 44 }}
+                style={{
+                  ...inputStyle,
+                  paddingLeft: 36,
+                  height: 46,
+                  maxWidth: isNarrow ? '100%' : 760, // ✅ ช่องค้นหายาว “พอดี” ไม่สั้น ไม่สุดขอบ
+                }}
               />
             </div>
 
-            {/* CATEGORY */}
+            {/* ROW 2: CATEGORY + CLEAR + COUNT */}
             <div
               style={{
                 display: 'flex',
                 gap: 10,
                 alignItems: 'center',
                 flexWrap: 'wrap',
-                position: 'relative',
-                zIndex: 60,
-                overflow: 'visible',
+                justifyContent: 'space-between',
               }}
             >
-              <b style={{ color: '#7a0c1d', whiteSpace: 'nowrap' }}>หมวดหมู่:</b>
+              {/* LEFT GROUP */}
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <b style={{ color: '#7a0c1d', whiteSpace: 'nowrap' }}>หมวดหมู่:</b>
 
-              <select
-                value={cat}
-                onChange={(e) => setCat(e.target.value)}
-                style={{
-                  ...inputStyle,
-                  height: 44,
-                  cursor: 'pointer',
-                  position: 'relative',
-                  zIndex: 60,
-                  background: '#fff',
-                  minWidth: 150, // ✅ กันโดนบีบ
-                  maxWidth: 220,
-                }}
-              >
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c === 'all' ? 'ทั้งหมด' : c}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <select
+                  value={cat}
+                  onChange={(e) => setCat(e.target.value)}
+                  style={{
+                    ...inputStyle,
+                    height: 46,
+                    cursor: 'pointer',
+                    width: 220, // ✅ หมวดหมู่เล็กลงตามที่ขอ
+                    maxWidth: '100%',
+                  }}
+                >
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {c === 'all' ? 'ทั้งหมด' : c}
+                    </option>
+                  ))}
+                </select>
 
-            {/* CLEAR */}
-            <button
-              onClick={() => {
-                setQ('')
-                setCat('all')
-              }}
-              style={{
-                height: 44,
-                padding: '0 14px',
-                borderRadius: 12,
-                border: '1px solid #eee',
-                background: '#fff',
-                cursor: 'pointer',
-                fontWeight: 900,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              ล้างตัวกรอง
-            </button>
+                <button
+                  onClick={() => {
+                    setQ('')
+                    setCat('all')
+                  }}
+                  style={{
+                    height: 46,
+                    padding: '0 14px',
+                    borderRadius: 12,
+                    border: '1px solid #eee',
+                    background: '#fff',
+                    cursor: 'pointer',
+                    fontWeight: 900,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  ล้างตัวกรอง
+                </button>
+              </div>
 
-            {/* COUNT */}
-            <div
-              style={{
-                textAlign: isNarrow ? 'left' : 'right',
-                opacity: 0.7,
-                fontWeight: 800,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              แสดง {filtered.length} / {products.length}
+              {/* RIGHT COUNT */}
+              <div style={{ opacity: 0.7, fontWeight: 800, whiteSpace: 'nowrap' }}>
+                แสดง {filtered.length} / {products.length}
+              </div>
             </div>
           </div>
         </div>
@@ -306,8 +287,7 @@ export default function Home() {
                     alt={p.name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={(e) => {
-                      ;(e.currentTarget as HTMLImageElement).style.display =
-                        'none'
+                      ;(e.currentTarget as HTMLImageElement).style.display = 'none'
                     }}
                   />
                 ) : null}
@@ -341,7 +321,6 @@ export default function Home() {
                     const { error } = await supabase.from('orders').insert([
                       { product_id: p.id, product_name: p.name, price: p.price },
                     ])
-
                     if (error) alert('เกิดข้อผิดพลาด: ' + error.message)
                     else alert('สั่งซื้อสำเร็จ! 🎉')
                   }}
@@ -397,7 +376,6 @@ function badge(text: string, color: string) {
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  height: 42,
   borderRadius: 12,
   border: '1px solid #e9e6e6',
   padding: '0 12px',
