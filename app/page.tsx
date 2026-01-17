@@ -56,9 +56,16 @@ export default function Home() {
   const filtered = useMemo(() => {
     const keyword = q.trim().toLowerCase()
     return products.filter((p) => {
-      const matchCat = cat === 'all' ? true : (p.category || '').toLowerCase() === cat.toLowerCase()
+      const matchCat =
+        cat === 'all'
+          ? true
+          : (p.category || '').toLowerCase() === cat.toLowerCase()
+
       const hay =
-        `${p.name || ''} ${p.description || ''} ${p.category || ''} ${p.price ?? ''} ${p.stock ?? ''}`.toLowerCase()
+        `${p.name || ''} ${p.description || ''} ${p.category || ''} ${
+          p.price ?? ''
+        } ${p.stock ?? ''}`.toLowerCase()
+
       const matchQ = keyword ? hay.includes(keyword) : true
       return matchCat && matchQ
     })
@@ -68,8 +75,7 @@ export default function Home() {
     <main
       style={{
         minHeight: '100vh',
-        background:
-          'linear-gradient(180deg, #fde9ea 0%, #fff 280px)',
+        background: 'linear-gradient(180deg, #fde9ea 0%, #fff 280px)',
         fontFamily: 'system-ui',
       }}
     >
@@ -80,6 +86,8 @@ export default function Home() {
           color: '#fff',
           padding: '22px 0',
           boxShadow: '0 12px 26px rgba(0,0,0,0.14)',
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         <div
@@ -97,7 +105,7 @@ export default function Home() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 30 }}>🍫</span>
               <h1 style={{ margin: 0, fontSize: 46, letterSpacing: -0.6 }}>
-               ร้าน Chocolate Shop
+                ร้าน Chocolate Shop
               </h1>
             </div>
             <p style={{ margin: '6px 0 0', opacity: 0.9 }}>
@@ -119,7 +127,7 @@ export default function Home() {
               whiteSpace: 'nowrap',
             }}
           >
-           หน้าจัดการสินค้า
+            หน้าจัดการสินค้า
           </a>
         </div>
       </div>
@@ -135,17 +143,23 @@ export default function Home() {
             border: '1px solid rgba(0,0,0,0.05)',
             display: 'grid',
             gap: 12,
+
+            // ✅ แก้ “หมวดหมู่โดนบัง”
+            position: 'relative',
+            zIndex: 50,
+            overflow: 'visible',
           }}
         >
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '1.2fr 0.8fr auto auto',
+              gridTemplateColumns: '1.2fr 0.9fr auto auto',
               gap: 10,
               alignItems: 'center',
             }}
           >
-            <div style={{ position: 'relative' }}>
+            {/* SEARCH */}
+            <div style={{ position: 'relative', zIndex: 55 }}>
               <span
                 style={{
                   position: 'absolute',
@@ -165,12 +179,30 @@ export default function Home() {
               />
             </div>
 
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {/* CATEGORY */}
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                alignItems: 'center',
+                position: 'relative',
+                zIndex: 60, // ✅ ดันทั้งกล่องหมวดหมู่ให้สูงสุด
+                overflow: 'visible',
+              }}
+            >
               <b style={{ color: '#7a0c1d', whiteSpace: 'nowrap' }}>หมวดหมู่:</b>
+
               <select
                 value={cat}
                 onChange={(e) => setCat(e.target.value)}
-                style={{ ...inputStyle, height: 44, cursor: 'pointer' }}
+                style={{
+                  ...inputStyle,
+                  height: 44,
+                  cursor: 'pointer',
+                  position: 'relative',
+                  zIndex: 60, // ✅ กันโดนบัง
+                  background: '#fff',
+                }}
               >
                 {categories.map((c) => (
                   <option key={c} value={c}>
@@ -180,6 +212,7 @@ export default function Home() {
               </select>
             </div>
 
+            {/* CLEAR */}
             <button
               onClick={() => {
                 setQ('')
@@ -193,15 +226,36 @@ export default function Home() {
                 background: '#fff',
                 cursor: 'pointer',
                 fontWeight: 900,
+                zIndex: 55,
               }}
             >
               ล้างตัวกรอง
             </button>
 
-            <div style={{ textAlign: 'right', opacity: 0.7, fontWeight: 800 }}>
+            {/* COUNT */}
+            <div
+              style={{
+                textAlign: 'right',
+                opacity: 0.7,
+                fontWeight: 800,
+                zIndex: 55,
+              }}
+            >
               แสดง {filtered.length} / {products.length}
             </div>
           </div>
+
+          {/* ✅ กันจอเล็ก: ถ้าแคบให้แถวนี้เรียงลง */}
+          <style jsx>{`
+            @media (max-width: 900px) {
+              div[style*='grid-template-columns: 1.2fr 0.9fr auto auto'] {
+                grid-template-columns: 1fr;
+              }
+              div[style*='textAlign: right'] {
+                text-align: left !important;
+              }
+            }
+          `}</style>
         </div>
 
         {/* PRODUCTS */}
@@ -250,7 +304,8 @@ export default function Home() {
                     alt={p.name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={(e) => {
-                      ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+                      ;(e.currentTarget as HTMLImageElement).style.display =
+                        'none'
                     }}
                   />
                 ) : null}
@@ -282,7 +337,11 @@ export default function Home() {
                   disabled={p.stock === 0}
                   onClick={async () => {
                     const { error } = await supabase.from('orders').insert([
-                      { product_id: p.id, product_name: p.name, price: p.price },
+                      {
+                        product_id: p.id,
+                        product_name: p.name,
+                        price: p.price,
+                      },
                     ])
 
                     if (error) alert('เกิดข้อผิดพลาด: ' + error.message)
@@ -345,4 +404,5 @@ const inputStyle: React.CSSProperties = {
   border: '1px solid #e9e6e6',
   padding: '0 12px',
   outline: 'none',
+  background: '#fff',
 }
