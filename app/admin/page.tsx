@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 type Product = {
   id: string
   name: string
+  description?: string | null
   price: number
   stock: number
   image_url?: string | null
@@ -18,6 +19,7 @@ export default function AdminPage() {
 
   // Add form
   const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [stock, setStock] = useState('')
   const [imageUrl, setImageUrl] = useState('')
@@ -25,6 +27,7 @@ export default function AdminPage() {
   // Edit modal
   const [editing, setEditing] = useState<Product | null>(null)
   const [editName, setEditName] = useState('')
+  const [editDescription, setEditDescription] = useState('')
   const [editPrice, setEditPrice] = useState('')
   const [editStock, setEditStock] = useState('')
   const [editImageUrl, setEditImageUrl] = useState('')
@@ -46,48 +49,43 @@ export default function AdminPage() {
     setProducts((data as Product[]) || [])
   }
 
-async function addProduct(e: React.FormEvent) {
-  e.preventDefault()
+  async function addProduct(e: React.FormEvent) {
+    e.preventDefault()
 
-  const p = Number(price)
-  const s = Number(stock)
+    const p = Number(price)
+    const s = Number(stock)
 
-  if (!name.trim()) return alert('กรอกชื่อสินค้า')
-  if (Number.isNaN(p) || p <= 0) return alert('ราคาต้องมากกว่า 0')
-  if (Number.isNaN(s) || s < 0) return alert('Stock ต้องเป็น 0 ขึ้นไป')
+    if (!name.trim()) return alert('กรอกชื่อสินค้า')
+    if (Number.isNaN(p) || p <= 0) return alert('ราคาต้องมากกว่า 0')
+    if (Number.isNaN(s) || s < 0) return alert('Stock ต้องเป็น 0 ขึ้นไป')
 
-  setLoading(true)
-
-  const { data, error } = await supabase
-    .from('products')
-    .insert([
+    setLoading(true)
+    const { error } = await supabase.from('products').insert([
       {
         name: name.trim(),
+        description: description.trim() ? description.trim() : null,
         price: p,
         stock: s,
         image_url: imageUrl.trim() ? imageUrl.trim() : null,
       },
     ])
-    .select() // ✅ ให้ตอบกลับมาด้วย
+    setLoading(false)
 
-  console.log('ADD product result:', { data, error }) // ✅ ดูใน Console
+    if (error) return alert('เพิ่มสินค้าไม่สำเร็จ: ' + error.message)
 
-  setLoading(false)
-
-  if (error) return alert('เพิ่มสินค้าไม่สำเร็จ: ' + error.message)
-
-  setName('')
-  setPrice('')
-  setStock('')
-  setImageUrl('')
-  await loadProducts()
-  alert('เพิ่มสินค้าแล้ว ✅')
-}
-
+    setName('')
+    setDescription('')
+    setPrice('')
+    setStock('')
+    setImageUrl('')
+    await loadProducts()
+    alert('เพิ่มสินค้าแล้ว ✅')
+  }
 
   function openEdit(p: Product) {
     setEditing(p)
     setEditName(p.name ?? '')
+    setEditDescription(p.description ?? '')
     setEditPrice(String(p.price ?? ''))
     setEditStock(String(p.stock ?? ''))
     setEditImageUrl(p.image_url ?? '')
@@ -97,40 +95,36 @@ async function addProduct(e: React.FormEvent) {
     setEditing(null)
   }
 
-async function saveEdit() {
-  if (!editing) return
+  async function saveEdit() {
+    if (!editing) return
 
-  const p = Number(editPrice)
-  const s = Number(editStock)
+    const p = Number(editPrice)
+    const s = Number(editStock)
 
-  if (!editName.trim()) return alert('กรอกชื่อสินค้า')
-  if (Number.isNaN(p) || p <= 0) return alert('ราคาต้องมากกว่า 0')
-  if (Number.isNaN(s) || s < 0) return alert('Stock ต้องเป็น 0 ขึ้นไป')
+    if (!editName.trim()) return alert('กรอกชื่อสินค้า')
+    if (Number.isNaN(p) || p <= 0) return alert('ราคาต้องมากกว่า 0')
+    if (Number.isNaN(s) || s < 0) return alert('Stock ต้องเป็น 0 ขึ้นไป')
 
-  setLoading(true)
+    setLoading(true)
+    const { error } = await supabase
+      .from('products')
+      .update({
+        name: editName.trim(),
+        description: editDescription.trim() ? editDescription.trim() : null,
+        price: p,
+        stock: s,
+        image_url: editImageUrl.trim() ? editImageUrl.trim() : null,
+      })
+      .eq('id', editing.id)
 
-  const { data, error } = await supabase
-    .from('products')
-    .update({
-      name: editName.trim(),
-      price: p,
-      stock: s,
-      image_url: editImageUrl.trim() ? editImageUrl.trim() : null,
-    })
-    .eq('id', editing.id)
-    .select() // ✅ ให้ตอบกลับมาด้วย
+    setLoading(false)
 
-  console.log('UPDATE product result:', { data, error }) // ✅ ดูใน Console
+    if (error) return alert('แก้ไขไม่สำเร็จ: ' + error.message)
 
-  setLoading(false)
-
-  if (error) return alert('แก้ไขไม่สำเร็จ: ' + error.message)
-
-  closeEdit()
-  await loadProducts()
-  alert('บันทึกการแก้ไขแล้ว ✅')
-}
-
+    closeEdit()
+    await loadProducts()
+    alert('บันทึกการแก้ไขแล้ว ✅')
+  }
 
   async function deleteProduct(id: string) {
     const ok = confirm('ลบสินค้านี้แน่ใจไหม?')
@@ -176,7 +170,7 @@ async function saveEdit() {
             </h1>
           </div>
           <p style={{ margin: '6px 0 0', opacity: 0.75 }}>
-            เพิ่ม / ลบ / แก้ไข สินค้า
+            เพิ่ม / ลบ / แก้ไข สินค้า (รวมคำอธิบาย)
           </p>
         </div>
 
@@ -228,6 +222,15 @@ async function saveEdit() {
                 style={inputStyle}
               />
             </div>
+
+            {/* ✅ เพิ่มช่องคำอธิบาย */}
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="คำอธิบายสินค้า (เหมือนหน้าแรก)"
+              style={textareaStyle}
+              rows={3}
+            />
 
             <div style={{ display: 'grid', gridTemplateColumns: '0.6fr 1.4fr', gap: 12 }}>
               <input
@@ -331,7 +334,13 @@ async function saveEdit() {
 
                 <div style={{ padding: 14 }}>
                   <div style={{ fontWeight: 900, fontSize: 16 }}>{p.name}</div>
-                  <div style={{ marginTop: 6, opacity: 0.75 }}>
+
+                  {/* ✅ โชว์คำอธิบาย */}
+                  <div style={{ marginTop: 6, opacity: 0.75, lineHeight: 1.4 }}>
+                    {p.description || '—'}
+                  </div>
+
+                  <div style={{ marginTop: 8, opacity: 0.75 }}>
                     {p.price} บาท • Stock {p.stock}
                   </div>
 
@@ -434,6 +443,15 @@ async function saveEdit() {
                 style={inputStyle}
               />
 
+              {/* ✅ แก้คำอธิบายได้ */}
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="คำอธิบายสินค้า"
+                style={textareaStyle}
+                rows={3}
+              />
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <input
                   value={editPrice}
@@ -528,4 +546,12 @@ const inputStyle: React.CSSProperties = {
   border: '1px solid #e9e6e6',
   padding: '0 12px',
   outline: 'none',
+}
+
+const textareaStyle: React.CSSProperties = {
+  borderRadius: 12,
+  border: '1px solid #e9e6e6',
+  padding: '10px 12px',
+  outline: 'none',
+  resize: 'vertical',
 }
