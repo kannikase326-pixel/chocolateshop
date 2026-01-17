@@ -134,25 +134,41 @@ export default function Home() {
               </div>
 
               {/* BUY BUTTON */}
-              <button
-                disabled={p.stock === 0}
-                style={{
-                  marginTop: 14,
-                  width: '100%',
-                  padding: '10px 0',
-                  borderRadius: 10,
-                  border: 'none',
-                  fontWeight: 700,
-                  cursor: p.stock === 0 ? 'not-allowed' : 'pointer',
-                  background:
-                    p.stock === 0
-                      ? '#ddd'
-                      : 'linear-gradient(135deg, #a4161a, #7a0c1d)',
-                  color: '#fff',
-                }}
-              >
-                {p.stock === 0 ? 'สินค้าหมด' : 'Buy Now'}
-              </button>
+<button
+  disabled={p.stock === 0}
+  onClick={async () => {
+    const { error } = await supabase.from('orders').insert([
+      {
+        product_id: p.id,
+        product_name: p.name,
+        price: p.price,
+      },
+    ])
+
+    if (error) {
+      alert('เกิดข้อผิดพลาด: ' + error.message)
+    } else {
+      alert('สั่งซื้อสำเร็จ! 🎉')
+    }
+  }}
+  style={{
+    marginTop: 14,
+    width: '100%',
+    padding: '10px 0',
+    borderRadius: 10,
+    border: 'none',
+    fontWeight: 700,
+    cursor: p.stock === 0 ? 'not-allowed' : 'pointer',
+    background:
+      p.stock === 0
+        ? '#ddd'
+        : 'linear-gradient(135deg, #a4161a, #7a0c1d)',
+    color: '#fff',
+  }}
+>
+  {p.stock === 0 ? 'สินค้าหมด' : 'Buy Now'}
+</button>
+
             </div>
           </div>
         ))}

@@ -3,232 +3,153 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
-type Product = {
-  id: string
-  name: string
-  description: string | null
-  category: string | null
-  price: number
-  stock: number
-  image_url: string | null
-  created_at: string
-}
-
-const emptyForm = {
-  name: '',
-  description: '',
-  category: 'classic',
-  price: 0,
-  stock: 0,
-  image_url: '',
-}
-
 export default function AdminPage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [form, setForm] = useState({ ...emptyForm })
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [msg, setMsg] = useState<string>('')
+  const [products, setProducts] = useState<any[]>([])
+
+  // form state
+  const [name, setName] = useState('')
+  const [price, setPrice] = useState('')
+  const [stock, setStock] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
 
   useEffect(() => {
-    fetchProducts()
+    loadProducts()
   }, [])
 
-  async function fetchProducts() {
-    setMsg('')
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false })
+  async function loadProducts() {
+    const { data } = await supabase.from('products').select('*')
+    setProducts(data || [])
+  }
 
-    if (error) {
-      setMsg(`Load error: ${error.message}`)
+  async function addProduct() {
+    if (!name || !price || !stock) {
+      alert('กรอกข้อมูลให้ครบ')
       return
     }
-    setProducts((data as Product[]) || [])
-  }
 
-  function startEdit(p: Product) {
-    setEditingId(p.id)
-    setForm({
-      name: p.name ?? '',
-      description: p.description ?? '',
-      category: p.category ?? 'classic',
-      price: p.price ?? 0,
-      stock: p.stock ?? 0,
-      image_url: p.image_url ?? '',
-    })
-    setMsg('')
-  }
+    const { error } = await supabase.from('products').insert([
+      {
+        name,
+        price: Number(price),
+        stock: Number(stock),
+        image_url: imageUrl,
+      },
+    ])
 
-  function resetForm() {
-    setEditingId(null)
-    setForm({ ...emptyForm })
-  }
-
-  async function submitForm(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setMsg('')
-
-    try {
-      if (!form.name.trim()) {
-        setMsg('กรอกชื่อสินค้าก่อนนะ')
-        return
-      }
-
-      if (editingId) {
-        // UPDATE
-        const { error } = await supabase
-          .from('products')
-          .update({
-            name: form.name,
-            description: form.description || null,
-            category: form.category || 'classic',
-            price: Number(form.price),
-            stock: Number(form.stock),
-            image_url: form.image_url || null,
-          })
-          .eq('id', editingId)
-
-        if (error) throw error
-        setMsg('✅ แก้ไขสินค้าแล้ว')
-      } else {
-        // INSERT
-        const { error } = await supabase.from('products').insert({
-          name: form.name,
-          description: form.description || null,
-          category: form.category || 'classic',
-          price: Number(form.price),
-          stock: Number(form.stock),
-          image_url: form.image_url || null,
-        })
-
-        if (error) throw error
-        setMsg('✅ เพิ่มสินค้าแล้ว')
-      }
-
-      resetForm()
-      await fetchProducts()
-    } catch (err: any) {
-      setMsg(`Save error: ${err.message}`)
-    } finally {
-      setLoading(false)
+    if (error) {
+      alert(error.message)
+    } else {
+      alert('เพิ่มสินค้าแล้ว ✅')
+      setName('')
+      setPrice('')
+      setStock('')
+      setImageUrl('')
+      loadProducts()
     }
   }
 
   async function deleteProduct(id: string) {
-    const ok = confirm('ลบสินค้านี้แน่ใจไหม?')
-    if (!ok) return
-
-    setLoading(true)
-    setMsg('')
-    try {
-      const { error } = await supabase.from('products').delete().eq('id', id)
-      if (error) throw error
-      setMsg('🗑️ ลบสินค้าแล้ว')
-      await fetchProducts()
-    } catch (err: any) {
-      setMsg(`Delete error: ${err.message}`)
-    } finally {
-      setLoading(false)
-    }
+    if (!confirm('ลบสินค้านี้ใช่ไหม')) return
+    await supabase.from('products').delete().eq('id', id)
+    loadProducts()
   }
 
   return (
-    <main style={{ padding: 24, maxWidth: 1000, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>🛠️ Admin — Products</h1>
-        <a href="/" style={{ textDecoration: 'underline' }}>ไปหน้าร้าน</a>
-      </div>
+    <main style={page}>
+      {/* HEADER */}
+      <header style={header}>
+        <h1 style={{ margin: 0, color: '#7a0c1d' }}>
+          🍫 Chocolate Shop — Admin
+        </h1>
+        <a href="/" style={backBtn}>← กลับหน้าเว็บ</a>
+      </header>
 
-      {msg && <p style={{ marginTop: 12 }}>{msg}</p>}
+      {/* ADD PRODUCT */}
+      <section style={card}>
+        <h2>➕ เพิ่มสินค้าใหม่</h2>
 
-      <section style={{ marginTop: 16, padding: 16, border: '1px solid #ddd' }}>
-        <h2 style={{ marginBottom: 12 }}>
-          {editingId ? 'แก้ไขสินค้า' : 'เพิ่มสินค้า'}
-        </h2>
+        <input placeholder="ชื่อสินค้า" value={name} onChange={e => setName(e.target.value)} />
+        <input placeholder="ราคา" value={price} onChange={e => setPrice(e.target.value)} />
+        <input placeholder="Stock" value={stock} onChange={e => setStock(e.target.value)} />
+        <input placeholder="Image URL" value={imageUrl} onChange={e => setImageUrl(e.target.value)} />
 
-        <form onSubmit={submitForm} style={{ display: 'grid', gap: 10 }}>
-          <input
-            placeholder="ชื่อสินค้า"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-
-          <input
-            placeholder="ลิงก์รูป (image_url)"
-            value={form.image_url}
-            onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-          />
-
-          <input
-            placeholder="หมวด (classic/dark/milk/matcha/gift)"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-          />
-
-          <input
-            placeholder="ราคา"
-            type="number"
-            value={form.price}
-            onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
-          />
-
-          <input
-            placeholder="สต็อก"
-            type="number"
-            value={form.stock}
-            onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })}
-          />
-
-          <textarea
-            placeholder="รายละเอียด"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={3}
-          />
-
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button type="submit" disabled={loading}>
-              {editingId ? 'Update' : 'Add'}
-            </button>
-            <button type="button" onClick={resetForm} disabled={loading}>
-              Clear
-            </button>
-            <button type="button" onClick={fetchProducts} disabled={loading}>
-              Refresh
-            </button>
-          </div>
-        </form>
+        <button onClick={addProduct} style={mainBtn}>
+          เพิ่มสินค้า
+        </button>
       </section>
 
-      <section style={{ marginTop: 20 }}>
-        <h2>รายการสินค้า</h2>
+      {/* PRODUCT LIST */}
+      <section>
+        <h2>📦 รายการสินค้า</h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 12 }}>
+        <div style={grid}>
           {products.map((p) => (
-            <div key={p.id} style={{ border: '1px solid #ddd', padding: 12 }}>
-              {p.image_url ? (
-                <img src={p.image_url} alt={p.name} style={{ width: '100%', height: 160, objectFit: 'cover' }} />
-              ) : (
-                <div style={{ width: '100%', height: 160, background: '#f3f3f3', display: 'grid', placeItems: 'center' }}>
-                  no image
-                </div>
-              )}
+            <div key={p.id} style={card}>
+              <b>{p.name}</b>
+              <p style={{ opacity: 0.7 }}>
+                {p.price} บาท | Stock {p.stock}
+              </p>
 
-              <h3 style={{ marginTop: 10 }}>{p.name}</h3>
-              <p>{p.price} บาท • Stock: {p.stock}</p>
-              <p style={{ opacity: 0.7 }}>{p.category}</p>
-
-              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                <button onClick={() => startEdit(p)} disabled={loading}>Edit</button>
-                <button onClick={() => deleteProduct(p.id)} disabled={loading}>Delete</button>
-              </div>
+              <button
+                style={{ ...mainBtn, background: '#999' }}
+                onClick={() => deleteProduct(p.id)}
+              >
+                Delete
+              </button>
             </div>
           ))}
         </div>
       </section>
     </main>
   )
+}
+
+/* ===== styles ===== */
+const page = {
+  minHeight: '100vh',
+  background: '#f8f5f5',
+  padding: 32,
+  fontFamily: 'system-ui',
+}
+
+const header = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  marginBottom: 24,
+}
+
+const backBtn = {
+  padding: '10px 18px',
+  borderRadius: 999,
+  background: '#7a0c1d',
+  color: '#fff',
+  textDecoration: 'none',
+  fontWeight: 600,
+}
+
+const grid = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+  gap: 20,
+}
+
+const card = {
+  background: '#fff',
+  borderRadius: 16,
+  padding: 16,
+  boxShadow: '0 10px 20px rgba(0,0,0,0.08)',
+  display: 'flex',
+  flexDirection: 'column' as const,
+  gap: 8,
+}
+
+const mainBtn = {
+  marginTop: 8,
+  padding: '10px 0',
+  borderRadius: 10,
+  border: 'none',
+  background: '#7a0c1d',
+  color: '#fff',
+  fontWeight: 700,
+  cursor: 'pointer',
 }
