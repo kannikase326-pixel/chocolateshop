@@ -165,7 +165,8 @@ export default function Home() {
               // ✅ จุดแก้สำคัญ: ทำคอลัมน์ไม่ให้บีบจนทับกัน
               gridTemplateColumns: isNarrow
                 ? '1fr'
-                : 'minmax(260px, 1fr) minmax(180px, 260px) auto auto',
+                : 'minmax(220px, 340px) minmax(180px, 260px) auto auto',
+
             }}
           >
             {/* SEARCH */}
