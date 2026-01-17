@@ -165,7 +165,7 @@ export default function Home() {
               // ✅ จุดแก้สำคัญ: ทำคอลัมน์ไม่ให้บีบจนทับกัน
               gridTemplateColumns: isNarrow
                 ? '1fr'
-                : 'minmax(260px, 1fr) minmax(260px, 420px) auto auto',
+                : 'minmax(260px, 1fr) minmax(180px, 260px) auto auto',
             }}
           >
             {/* SEARCH */}
@@ -213,7 +213,8 @@ export default function Home() {
                   position: 'relative',
                   zIndex: 60,
                   background: '#fff',
-                  minWidth: 200, // ✅ กันโดนบีบ
+                  minWidth: 150, // ✅ กันโดนบีบ
+                  maxWidth: 220,
                 }}
               >
                 {categories.map((c) => (
