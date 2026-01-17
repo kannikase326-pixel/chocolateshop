@@ -27,6 +27,15 @@ export default function Home() {
   const [q, setQ] = useState('')
   const [cat, setCat] = useState('all')
 
+  // ✅ responsive แบบง่าย: เช็คความกว้างหน้าจอ
+  const [isNarrow, setIsNarrow] = useState(false)
+  useEffect(() => {
+    const onResize = () => setIsNarrow(window.innerWidth <= 900)
+    onResize()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
   useEffect(() => {
     fetchProducts()
   }, [])
@@ -61,10 +70,9 @@ export default function Home() {
           ? true
           : (p.category || '').toLowerCase() === cat.toLowerCase()
 
-      const hay =
-        `${p.name || ''} ${p.description || ''} ${p.category || ''} ${
-          p.price ?? ''
-        } ${p.stock ?? ''}`.toLowerCase()
+      const hay = `${p.name || ''} ${p.description || ''} ${p.category || ''} ${
+        p.price ?? ''
+      } ${p.stock ?? ''}`.toLowerCase()
 
       const matchQ = keyword ? hay.includes(keyword) : true
       return matchCat && matchQ
@@ -143,8 +151,6 @@ export default function Home() {
             border: '1px solid rgba(0,0,0,0.05)',
             display: 'grid',
             gap: 12,
-
-            // ✅ แก้ “หมวดหมู่โดนบัง”
             position: 'relative',
             zIndex: 50,
             overflow: 'visible',
@@ -153,9 +159,13 @@ export default function Home() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '1.2fr 0.9fr auto auto',
               gap: 10,
               alignItems: 'center',
+
+              // ✅ จุดแก้สำคัญ: ทำคอลัมน์ไม่ให้บีบจนทับกัน
+              gridTemplateColumns: isNarrow
+                ? '1fr'
+                : 'minmax(260px, 1fr) minmax(260px, 420px) auto auto',
             }}
           >
             {/* SEARCH */}
@@ -185,8 +195,9 @@ export default function Home() {
                 display: 'flex',
                 gap: 10,
                 alignItems: 'center',
+                flexWrap: 'wrap',
                 position: 'relative',
-                zIndex: 60, // ✅ ดันทั้งกล่องหมวดหมู่ให้สูงสุด
+                zIndex: 60,
                 overflow: 'visible',
               }}
             >
@@ -200,8 +211,9 @@ export default function Home() {
                   height: 44,
                   cursor: 'pointer',
                   position: 'relative',
-                  zIndex: 60, // ✅ กันโดนบัง
+                  zIndex: 60,
                   background: '#fff',
+                  minWidth: 200, // ✅ กันโดนบีบ
                 }}
               >
                 {categories.map((c) => (
@@ -226,7 +238,7 @@ export default function Home() {
                 background: '#fff',
                 cursor: 'pointer',
                 fontWeight: 900,
-                zIndex: 55,
+                whiteSpace: 'nowrap',
               }}
             >
               ล้างตัวกรอง
@@ -235,27 +247,15 @@ export default function Home() {
             {/* COUNT */}
             <div
               style={{
-                textAlign: 'right',
+                textAlign: isNarrow ? 'left' : 'right',
                 opacity: 0.7,
                 fontWeight: 800,
-                zIndex: 55,
+                whiteSpace: 'nowrap',
               }}
             >
               แสดง {filtered.length} / {products.length}
             </div>
           </div>
-
-          {/* ✅ กันจอเล็ก: ถ้าแคบให้แถวนี้เรียงลง */}
-          <style jsx>{`
-            @media (max-width: 900px) {
-              div[style*='grid-template-columns: 1.2fr 0.9fr auto auto'] {
-                grid-template-columns: 1fr;
-              }
-              div[style*='textAlign: right'] {
-                text-align: left !important;
-              }
-            }
-          `}</style>
         </div>
 
         {/* PRODUCTS */}
@@ -337,11 +337,7 @@ export default function Home() {
                   disabled={p.stock === 0}
                   onClick={async () => {
                     const { error } = await supabase.from('orders').insert([
-                      {
-                        product_id: p.id,
-                        product_name: p.name,
-                        price: p.price,
-                      },
+                      { product_id: p.id, product_name: p.name, price: p.price },
                     ])
 
                     if (error) alert('เกิดข้อผิดพลาด: ' + error.message)
