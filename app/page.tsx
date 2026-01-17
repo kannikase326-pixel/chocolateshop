@@ -119,7 +119,7 @@ export default function Home() {
               whiteSpace: 'nowrap',
             }}
           >
-            หลังบ้าน Admin
+           หน้าจัดการสินค้า
           </a>
         </div>
       </div>
