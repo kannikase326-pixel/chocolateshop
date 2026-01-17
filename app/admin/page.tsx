@@ -46,18 +46,21 @@ export default function AdminPage() {
     setProducts((data as Product[]) || [])
   }
 
-  async function addProduct(e: React.FormEvent) {
-    e.preventDefault()
+async function addProduct(e: React.FormEvent) {
+  e.preventDefault()
 
-    const p = Number(price)
-    const s = Number(stock)
+  const p = Number(price)
+  const s = Number(stock)
 
-    if (!name.trim()) return alert('กรอกชื่อสินค้า')
-    if (Number.isNaN(p) || p <= 0) return alert('ราคาต้องมากกว่า 0')
-    if (Number.isNaN(s) || s < 0) return alert('Stock ต้องเป็น 0 ขึ้นไป')
+  if (!name.trim()) return alert('กรอกชื่อสินค้า')
+  if (Number.isNaN(p) || p <= 0) return alert('ราคาต้องมากกว่า 0')
+  if (Number.isNaN(s) || s < 0) return alert('Stock ต้องเป็น 0 ขึ้นไป')
 
-    setLoading(true)
-    const { error } = await supabase.from('products').insert([
+  setLoading(true)
+
+  const { data, error } = await supabase
+    .from('products')
+    .insert([
       {
         name: name.trim(),
         price: p,
@@ -65,17 +68,22 @@ export default function AdminPage() {
         image_url: imageUrl.trim() ? imageUrl.trim() : null,
       },
     ])
-    setLoading(false)
+    .select() // ✅ ให้ตอบกลับมาด้วย
 
-    if (error) return alert('เพิ่มสินค้าไม่สำเร็จ: ' + error.message)
+  console.log('ADD product result:', { data, error }) // ✅ ดูใน Console
 
-    setName('')
-    setPrice('')
-    setStock('')
-    setImageUrl('')
-    await loadProducts()
-    alert('เพิ่มสินค้าแล้ว ✅')
-  }
+  setLoading(false)
+
+  if (error) return alert('เพิ่มสินค้าไม่สำเร็จ: ' + error.message)
+
+  setName('')
+  setPrice('')
+  setStock('')
+  setImageUrl('')
+  await loadProducts()
+  alert('เพิ่มสินค้าแล้ว ✅')
+}
+
 
   function openEdit(p: Product) {
     setEditing(p)
@@ -89,35 +97,40 @@ export default function AdminPage() {
     setEditing(null)
   }
 
-  async function saveEdit() {
-    if (!editing) return
+async function saveEdit() {
+  if (!editing) return
 
-    const p = Number(editPrice)
-    const s = Number(editStock)
+  const p = Number(editPrice)
+  const s = Number(editStock)
 
-    if (!editName.trim()) return alert('กรอกชื่อสินค้า')
-    if (Number.isNaN(p) || p <= 0) return alert('ราคาต้องมากกว่า 0')
-    if (Number.isNaN(s) || s < 0) return alert('Stock ต้องเป็น 0 ขึ้นไป')
+  if (!editName.trim()) return alert('กรอกชื่อสินค้า')
+  if (Number.isNaN(p) || p <= 0) return alert('ราคาต้องมากกว่า 0')
+  if (Number.isNaN(s) || s < 0) return alert('Stock ต้องเป็น 0 ขึ้นไป')
 
-    setLoading(true)
-    const { error } = await supabase
-      .from('products')
-      .update({
-        name: editName.trim(),
-        price: p,
-        stock: s,
-        image_url: editImageUrl.trim() ? editImageUrl.trim() : null,
-      })
-      .eq('id', editing.id)
+  setLoading(true)
 
-    setLoading(false)
+  const { data, error } = await supabase
+    .from('products')
+    .update({
+      name: editName.trim(),
+      price: p,
+      stock: s,
+      image_url: editImageUrl.trim() ? editImageUrl.trim() : null,
+    })
+    .eq('id', editing.id)
+    .select() // ✅ ให้ตอบกลับมาด้วย
 
-    if (error) return alert('แก้ไขไม่สำเร็จ: ' + error.message)
+  console.log('UPDATE product result:', { data, error }) // ✅ ดูใน Console
 
-    closeEdit()
-    await loadProducts()
-    alert('บันทึกการแก้ไขแล้ว ✅')
-  }
+  setLoading(false)
+
+  if (error) return alert('แก้ไขไม่สำเร็จ: ' + error.message)
+
+  closeEdit()
+  await loadProducts()
+  alert('บันทึกการแก้ไขแล้ว ✅')
+}
+
 
   async function deleteProduct(id: string) {
     const ok = confirm('ลบสินค้านี้แน่ใจไหม?')
